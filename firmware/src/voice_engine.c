@@ -10,7 +10,7 @@ int vt_analyse_basic(const vt_audio_frame_t *frame,
                      vt_basic_features_t *features)
 {
     size_t i;
-    double sum_squares = 0.0;
+    float sum_squares = 0.0f;
     float peak = 0.0f;
     size_t crossings = 0;
 
@@ -35,7 +35,7 @@ int vt_analyse_basic(const vt_audio_frame_t *frame,
         if (magnitude > peak) {
             peak = magnitude;
         }
-        sum_squares += (double)sample * (double)sample;
+        sum_squares += sample * sample;
 
         if (i > 0) {
             const float previous = frame->samples[i - 1];
@@ -47,7 +47,7 @@ int vt_analyse_basic(const vt_audio_frame_t *frame,
     }
 
     features->peak = peak;
-    features->rms = (float)sqrt(sum_squares / (double)frame->sample_count);
+    features->rms = (float)sqrtf(sum_squares / (float)frame->sample_count);
     features->zero_crossing_rate =
         frame->sample_count > 1
             ? (float)crossings / (float)(frame->sample_count - 1)
@@ -69,7 +69,7 @@ int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
     unsigned int tau;
     unsigned int selected_tau = 0U;
     size_t usable_samples;
-    double energy = 0.0;
+    float energy = 0.0f;
 
     if (result == NULL) {
         return 0;
@@ -103,11 +103,10 @@ int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
     }
 
     for (tau = 1U; tau <= max_tau; ++tau) {
-        double sum = 0.0;
+        float sum = 0.0f;
         size_t i;
         for (i = 0U; i < usable_samples; ++i) {
-            const double delta = (double)frame->samples[i] -
-                                 (double)frame->samples[i + tau];
+            const float delta = frame->samples[i] - frame->samples[i + tau];
             sum += delta * delta;
         }
         difference[tau] = (float)sum;
@@ -121,7 +120,7 @@ int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
     }
 
     for (tau = 0U; tau < frame->sample_count; ++tau) {
-        const double sample = (double)frame->samples[tau];
+        const float sample = frame->samples[tau];
         energy += sample * sample;
     }
     if (energy < 1.0e-10) {
