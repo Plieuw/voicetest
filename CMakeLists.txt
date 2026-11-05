@@ -10,6 +10,10 @@ add_library(voicetest_dsp
 )
 target_include_directories(voicetest_dsp PUBLIC firmware/include)
 
+if (NOT MSVC)
+    target_link_libraries(voicetest_dsp PUBLIC m)
+endif()
+
 if (MSVC)
     target_compile_options(voicetest_dsp PRIVATE /W4)
 else()
