@@ -5,7 +5,7 @@
 
 #define CHECK(condition) do { \
     if (!(condition)) { \
-        fprintf(stderr, "FAIL: %s (line %d)\n", #condition, __LINE__); \
+        fprintf(stderr, "FAIL: %s (line %d)\\n", #condition, __LINE__); \
         return 1; \
     } \
 } while (0)
@@ -24,6 +24,7 @@ int main(void)
     float silence[4096] = { 0.0f };
     vt_audio_frame_t tone_frame = { tone, 4096, 48000 };
     vt_audio_frame_t silence_frame = { silence, 4096, 48000 };
+    vt_pitch_workspace_t workspace;
     vt_pitch_result_t pitch;
     size_t i;
 
@@ -45,14 +46,17 @@ int main(void)
                               220.0f * (float)i / 48000.0f);
     }
 
-    CHECK(vt_estimate_pitch_yin(&tone_frame, 70.0f, 1000.0f, &pitch) == 1);
+    CHECK(vt_estimate_pitch_yin(&tone_frame, 70.0f, 1000.0f,
+                                &workspace, &pitch) == 1);
     CHECK(pitch.is_voiced == 1);
     CHECK(nearly_equal(pitch.frequency_hz, 220.0f, 1.5f));
     CHECK(pitch.confidence > 0.8f);
 
-    CHECK(vt_estimate_pitch_yin(&silence_frame, 70.0f, 1000.0f, &pitch) == 1);
+    CHECK(vt_estimate_pitch_yin(&silence_frame, 70.0f, 1000.0f,
+                                &workspace, &pitch) == 1);
     CHECK(pitch.is_voiced == 0);
-    CHECK(vt_estimate_pitch_yin(&tone_frame, 0.0f, 1000.0f, &pitch) == 0);
+    CHECK(vt_estimate_pitch_yin(&tone_frame, 0.0f, 1000.0f,
+                                &workspace, &pitch) == 0);
 
     puts("All voice engine tests passed.");
     return 0;
