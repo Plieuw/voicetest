@@ -1,65 +1,46 @@
-# VoiceTest
+#ifndef VOICETEST_AUDIO_BLOCK_QUEUE_H
+#define VOICETEST_AUDIO_BLOCK_QUEUE_H
 
-Experimental voice-analysis and voice-processing firmware for the M-VAVE FM1.
+#include "phone_audio_packet.h"
 
-**Status:** portable DSP and phone-packet parser scaffolding. There is not yet a working FM1 application image, device-side Wi-Fi receiver, or verified wireless microphone path.
+#include <stdint.h>
 
-## Goal
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-Build a real-time voice engine that analyses one incoming voice signal and shares that analysis with multiple processing blocks:
+/* Four 20 ms blocks: 80 ms maximum queued audio, 7.5 KiB of PCM storage. */
+#define VT_AUDIO_QUEUE_CAPACITY 4U
 
-- pitch detection and pitch correction (AutoTune-style)
-- pitch shifting
-- frequency shifting (not the same as pitch shifting)
-- vocoder processing
-- formant analysis, shifting and morphing
-- experimental SAM-like synthetic speech driven by live voice features
+typedef struct {
+    uint32_t sequence;
+    uint64_t first_sample;
+    int16_t pcm[VT_PHONE_SAMPLES_PER_PACKET];
+} vt_audio_block_t;
 
-The aim is a flexible voice-processing instrument, not a single-purpose vocoder.
+typedef struct {
+    /* SPSC indices: one network-task producer and one audio-ISR consumer. */
+    volatile uint32_t write_index;
+    volatile uint32_t read_index;
+    vt_audio_block_t blocks[VT_AUDIO_QUEUE_CAPACITY];
+} vt_audio_block_queue_t;
 
-## Design principles
+void vt_audio_queue_init(vt_audio_block_queue_t *queue);
 
-1. One shared analysis engine. Effects reuse pitch, spectral and voice-state information rather than each implementing a separate analyser.
-2. Modular processing. Processing blocks are independently testable and eventually routable in different combinations.
-3. Portable DSP first. Keep the core independent of the FM1 SDK.
-4. Transport-independent audio. Wi-Fi, USB audio and any future transport feed the same PCM interface.
-5. No assumed hardware capabilities. A transport is supported only after it is demonstrated on the target.
-6. Original Felucca first. Original Felucca remains the user's starting firmware and recovery reference. VoiceTest is a separate clean app, not a modification of Felucca or fm1pokoe.
+/* Returns 1 when queued, 0 for an invalid packet or a full queue. */
+int vt_audio_queue_push(vt_audio_block_queue_t *queue,
+                        const uint8_t *datagram,
+                        uint32_t datagram_bytes);
 
-## Repository layout
+/* Copies the oldest block to caller-owned storage. Returns 0 when empty. */
+int vt_audio_queue_pop(vt_audio_block_queue_t *queue,
+                       vt_audio_block_t *block);
 
-- firmware/include/ — public DSP and transport interfaces
-- firmware/src/ — portable DSP and packet parsing implementation
-- tests/ — host-side tests
-- phone-app/android/ — experimental Android microphone sender
-- docs/ARCHITECTURE.md — system design
-- docs/AUDIO_TRANSPORT.md — input transport investigation
-- docs/DSP_ENGINE.md — analysis and processing design
-- docs/ROADMAP.md — staged implementation plan
-- docs/FM1_TARGET.md — FM1 hardware and resource notes
-- docs/FELUCCA_INTEGRATION.md — Felucca baseline, platform and installer/updater plan
-- docs/PHONE_AUDIO_PROTOCOL.md — VTP1 phone audio protocol
+/* Number of complete blocks currently queued (approximate under concurrency). */
+uint32_t vt_audio_queue_count(const vt_audio_block_queue_t *queue);
 
-## Phone microphone input
+#ifdef __cplusplus
+}
+#endif
 
-The Android companion app in phone-app/android/ captures the phone microphone only after the user presses Start and sends mono PCM16 over local Wi-Fi UDP. The packet format is documented in docs/PHONE_AUDIO_PROTOCOL.md.
-
-The portable VTP1 parser is implemented in firmware/src/phone_audio_packet.c. It validates the fixed 48 kHz / 20 ms datagram and exposes PCM16 samples as floats without allocation or copying. The FM1-side UDP socket receiver, jitter buffer and audio callback integration are not implemented yet. The Android project has not yet been built on a physical phone.
-
-## Build the portable core
-
-Requires CMake and a C compiler:
-
-    cmake -S . -B build
-    cmake --build build
-    ctest --test-dir build --output-on-failure
-
-The portable core currently calculates basic signal measurements and includes an initial YIN-based F0 estimator. Its caller-owned scratch workspace is intended to live in static storage on the FM1, not on the audio callback stack. The phone packet parser has host-side tests for packet validation and signed PCM conversion. Neither DSP nor networking has been profiled on the FM1.
-
-## FM1 platform
-
-The practical route for phone Wi-Fi is a clean VoiceTest app on fm1-base plus felucca-bsp. Felucca itself is the user's starting firmware and recovery reference; its GPL application code is not copied into the Wi-Fi app. See docs/FELUCCA_INTEGRATION.md before any installation work.
-
-## Project separation
-
-This is a separate project. It does not modify fm1pokoe or the upstream Felucca repository.
+#endif
