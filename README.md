@@ -34,6 +34,7 @@ The aim is a flexible voice-processing instrument, not a single-purpose vocoder.
 - `docs/AUDIO_TRANSPORT.md` — input transport investigation
 - `docs/DSP_ENGINE.md` — analysis and processing design
 - `docs/ROADMAP.md` — staged implementation plan
+- `docs/FM1_TARGET.md` — hardware constraints and audio-input investigation
 
 ## Build the portable core
 
@@ -45,7 +46,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The current core is deliberately small: it accepts mono floating-point PCM frames and calculates basic signal measurements. It is a foundation for the shared analyser, not yet a pitch/formant detector.
+The current core accepts mono floating-point PCM frames, calculates basic signal measurements, and includes an initial YIN-based F0 estimator with a confidence value. It is still an early prototype: it has not yet been profiled on the FM1, and it does not estimate formants or phonemes.
 
 ## Hardware integration
 
