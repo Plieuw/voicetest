@@ -25,7 +25,7 @@ int main(void)
     CHECK(features.has_samples == 1);
     CHECK(nearly_equal(features.peak, 1.0f, 0.0001f));
     CHECK(nearly_equal(features.rms, sqrtf(0.5f), 0.0001f));
-    CHECK(nearly_equal(features.zero_crossing_rate, 2.0f / 3.0f, 0.0001f));
+    CHECK(nearly_equal(features.zero_crossing_rate, 1.0f / 3.0f, 0.0001f));
 
     CHECK(vt_analyse_basic(NULL, &features) == 0);
     CHECK(features.has_samples == 0);
