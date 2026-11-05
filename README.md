@@ -59,6 +59,16 @@ ctest --test-dir build --output-on-failure
 
 The current core accepts mono floating-point PCM frames, calculates basic signal measurements, and includes an initial YIN-based F0 estimator with a confidence value. The phone packet parser and audio queue have host-side tests. These components have not yet been profiled on the FM1; formant and phoneme analysis are not implemented.
 
+## Build the original Felucca baseline
+
+The upstream source, BSP and engines revisions are pinned in [docs/UPSTREAM_PINS.md](docs/UPSTREAM_PINS.md). To reproduce the untouched Felucca build (toolchain and AC79 SDK must already be installed as described in upstream `BUILDING.md`):
+
+```sh
+sh tools/build_felucca_baseline.sh
+```
+
+This only builds the upstream baseline in `build/upstream/Felucca`; it does not flash the device and is not yet the VoiceTest firmware.
+
 ## Hardware integration
 
 The FM1-specific layer will be added only after confirming the exact board revision, SoC/SDK interfaces, available RAM/CPU budget, and audio input/output paths. The integration baseline is original Felucca, not a guessed generic AC79 port. See [the Felucca integration plan](docs/FELUCCA_INTEGRATION.md) before any firmware installation work.
