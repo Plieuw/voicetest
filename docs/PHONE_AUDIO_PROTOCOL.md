@@ -4,7 +4,7 @@
 
 The phone companion app captures microphone audio only while the user presses Start. It sends mono PCM over UDP on the local Wi-Fi network. The FM1 receiver will be a separate firmware adapter.
 
-This is experimental. It does not mean the FM1 UDP receiver is already implemented. In the current fm1-base platform, Wi-Fi and Bluetooth are mutually exclusive; Wi-Fi memory cost and packet throughput must be measured.
+This is experimental. It does not mean the FM1 UDP receiver is already implemented. In the current fm1-base platform, Wi-Fi and Bluetooth are mutually exclusive. The Wi-Fi example reserves about 128 KiB for radio buffers and disables USB audio input to free RAM, so memory cost and packet throughput must be measured.
 
 ## Network
 
