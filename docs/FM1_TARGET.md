@@ -1,57 +1,41 @@
 # FM1 target notes
 
-## Starting point: original Felucca
+## Starting point
 
-The integration baseline is the original upstream Felucca firmware and source, not the user's `fm1pokoe` fork.
+The user wants the FM1 returned to original Felucca first. Keep that as the starting firmware and recovery reference. The new VoiceTest firmware remains a separate, clean app.
 
-The current upstream Felucca project documents:
-- a firmware app, a dedicated update loader and a `.fwsc` install package
-- a USB-MIDI SysEx installer with device identity detection and post-install identity verification
-- a route back to the official M-VAVE V15 package
-- a build based on the JieLi pi32v2 toolchain and AC79 SDK
-- separate `Felucca-Engines` and `felucca-bsp` submodules
+## Hardware and platform
 
-See [FELUCCA_INTEGRATION.md](FELUCCA_INTEGRATION.md) and the upstream [BUILDING.md](https://github.com/hugelton/Felucca/blob/main/BUILDING.md).
+The FM1 uses the JieLi AC79 / pi32v2 platform. The shared felucca-bsp repository supplies the chip and board layer. The fm1-base project builds on that BSP and adds the app platform, audio callback, storage, USB, optional radios and host simulator.
 
-Do not assume that Felucca's installer accepts an arbitrary VoiceTest package. Its current installer validates package identity and the Felucca loader marker; the official V15 package is a special, hash-verified exception. A VoiceTest package format and update path must be designed and tested separately.
+The FM1 audio output is ALNK0/I2S to the external codec. Felucca's audio.c fills the output DMA buffer in its audio interrupt. Its USB audio recording tap sends the FM1 master output to a computer; it is not an application microphone-input callback. The optional USB audio output feature receives computer playback through the FM1 USB device endpoint and mixes it after the app's own output. Neither feature is a substitute for the phone's Wi-Fi audio input.
 
-## Known hardware constraints
+## Phone input route: Wi-Fi UDP
 
-The FM1 is based on the JieLi AC791N / WL82 family and uses a pi32v2 CPU. Community hardware documentation reports:
-- two CPU cores and single-precision hardware floating point
-- approximately 512 KB of usable on-chip SRAM in the firmware memory window
-- no external RAM
-- stereo audio output through the ALNK0/I2S path
-- USB normally operating as a device; USB host mode may be possible with external power
-- no dedicated debug header on the board
+fm1-base has a Wi-Fi platform option:
+- wifi = true in fm1.toml
+- network source files listed in net = [...]
+- plat_net_task() for socket work in a separate task
+- lwIP sockets, including the standard UDP socket API
+- Wi-Fi station setup/state through plat_wifi_on(), plat_wifi_state(), plat_wifi_ip(), and join/scan helpers
 
-Exact chip markings and flash variants have differed between reported board revisions. Treat these as platform notes, not a substitute for checking the actual unit.
+The network task must validate incoming VTP1 datagrams and copy PCM into a bounded ring. The audio callback must never call sockets or wait for packets. It should consume whatever samples are ready, track underruns, and fade safely to silence when the stream stops.
 
-## Wi-Fi resource and Bluetooth constraint
+## Resource limits and radio trade-offs
 
-The current `fm1-base` documentation describes Wi-Fi as a station using JieLi's Wi-Fi libraries and lwIP sockets. Its Wi-Fi memory map reserves about 128 KiB for Wi-Fi library buffers, and the example build explicitly disables USB audio input because RAM is needed by Wi-Fi. The same platform currently builds with Bluetooth or Wi-Fi, not both. Therefore, while Wi-Fi UDP is a plausible phone-audio path, it has a substantial memory cost and means BLE-MIDI cannot be used at the same time in that platform configuration.
+The current fm1-base README documents a 581 KB app slot, 128 KB of data RAM and a 304 KB buffer pool in a Wi-Fi build. Its Wi-Fi example uses about 420 KB flash, 119 KB data RAM and 299 KB pool. Wi-Fi and Bluetooth are mutually exclusive in the documented platform version; the Wi-Fi example disables USB audio input and output. This leaves little room for additional app memory, so DSP blocks must be profiled individually and in combination.
 
-## Audio input is the key unknown
+## Licence and source boundary
 
-The published board overview documents stereo output, but does not establish a built-in microphone or line-level audio input. The FM1 should therefore not be assumed to accept an analogue microphone directly.
-
-Felucca's current build guide describes USB Audio Class input as the master output (stereo, 44.1 or 48 kHz) exposed over USB. That is useful for sending FM1 audio to a computer, but it does not by itself prove that the FM1 application can consume incoming PCM from a phone or computer. We must inspect the BSP's actual capture/playback direction and callback before treating USB audio as a usable input.
-
-## Candidate input routes
-
-1. **Wi-Fi UDP from a companion device.** Technically plausible if the firmware can receive PCM and the RAM/flash budget permits it. Memory cost and radio coexistence need measurement on the exact Felucca/BSP baseline.
-2. **USB Audio Class host input.** Requires verified host-side audio capture and a suitable power/host arrangement; ordinary USB device audio descriptors do not establish this.
-3. **External audio interface / custom hardware.** Not part of the no-modification plan; do not assume a direct analogue input exists.
-4. **Bluetooth audio input.** Not currently established by the reviewed Felucca build documentation. Do not confuse Bluetooth MIDI with audio streaming.
+Felucca is GPL-3.0-only. The fm1-base porting guide describes a clean-app route for Wi-Fi builds and states that its JieLi binary Wi-Fi libraries require an MPL-2.0 firmware. Do not copy Felucca's GPL application code into VoiceTest as part of that route. Use the independently licensed BSP/platform components and keep VoiceTest's DSP/app code original, with provenance and licence decisions documented before distribution.
 
 ## First hardware milestone
 
-Before flashing a custom image:
-- record the firmware version shown at power-on
-- back up projects/presets and confirm what the backup actually contains
-- confirm the exact target board/flash revision
-- pin the matching Felucca source, BSP and SDK revisions
-- build and test a harmless audio-output prototype first
-- only then test a candidate voice-input route
+- Confirm the exact FM1 board and flash revision from the actual unit.
+- Pin the exact fm1-base, felucca-bsp and AC79 SDK revisions.
+- Build the clean VoiceTest app without flashing.
+- Verify a low-CPU output/bypass path.
+- Add Wi-Fi UDP receive and measure packet loss, queue depth, latency, CPU and RAM.
+- Add heavier voice processing only after the combined Wi-Fi/audio budget is measured.
 
-Do not flash an experimental image until a recovery path and a known-good original Felucca package are available and verified.
+Do not flash an experimental image until the package, identity check and a tested recovery path are available.
