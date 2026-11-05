@@ -36,6 +36,10 @@ The aim is a flexible voice-processing instrument, not a single-purpose vocoder.
 - `docs/ROADMAP.md` — staged implementation plan
 - `docs/FM1_TARGET.md` — hardware constraints and audio-input investigation
 
+## Phone microphone input
+
+An experimental Android companion app is in `phone-app/android/`. It captures the phone microphone only after the user presses Start and sends mono PCM16 over local Wi-Fi UDP. The packet format is documented in `docs/PHONE_AUDIO_PROTOCOL.md`. The FM1-side UDP receiver is not implemented yet, and the Android project has not yet been built on a device.
+
 ## Build the portable core
 
 Requires CMake and a C compiler:
