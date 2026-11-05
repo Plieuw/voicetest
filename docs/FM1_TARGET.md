@@ -12,6 +12,10 @@ The FM1 is based on the JieLi AC791N / WL82 family and uses a pi32v2 CPU. Commun
 
 Exact chip markings and flash variants have differed between reported board revisions. Treat these as platform notes, not a substitute for checking the actual unit.
 
+## Wi-Fi resource and Bluetooth constraint
+
+The current `fm1-base` documentation describes Wi-Fi as a station using JieLi's Wi-Fi libraries and lwIP sockets. Its Wi-Fi memory map reserves about 128 KiB for Wi-Fi library buffers, and the example build explicitly disables USB audio input because RAM is needed by Wi-Fi. The same platform currently builds with Bluetooth or Wi-Fi, not both. Therefore, while Wi-Fi UDP is a plausible phone-audio path, it has a substantial memory cost and means BLE-MIDI cannot be used at the same time in that platform configuration.
+
 ## Audio input is the key unknown
 
 The published board overview documents stereo output, but does not establish a built-in microphone or line-level audio input. The FM1 should therefore not be assumed to accept an analogue microphone directly.
@@ -21,7 +25,7 @@ The fm1-base USB audio options also need to be interpreted carefully:
 - USB audio playback lets a computer play through the FM1's output mixer.
 - The platform documentation says the computer's playback is mixed after the app's own MASTER output. That does not establish that an app can read the computer's incoming PCM as an input signal.
 
-A real-time voice processor needs a PCM input that the app can actually access. This must be proven before building the effects around it.
+A real-time voice processor needs a PCM input that the app can actually access. The current fm1-base app interface documents USB audio capture as a platform feature, but its Wi-Fi example disables it for memory reasons. We must inspect the exact audio callback/API and verify whether app code can consume those captured samples before treating USB audio as a usable input.
 
 ## Candidate input routes
 
