@@ -6,26 +6,27 @@
 - [x] Establish a portable PCM frame contract.
 - [x] Add basic signal measurements and host-side tests.
 - [x] Add a portable VTP1 phone-packet parser and PCM16 conversion tests.
-- [ ] Build and run the host test suite in CI.
+- [ ] Build and run the complete host test suite in CI.
 - [ ] Confirm exact FM1 board revision and SoC marking.
 
-## Phase 1 — original Felucca integration
+## Phase 1 — original Felucca and platform
 
 - [x] Inspect original Felucca README, build guide and USB-MIDI installer.
-- [x] Document the existing package, loader, identity-check and official-V15 return path.
-- [ ] Inspect the exact Felucca BSP submodule APIs used by the current release.
-- [ ] Pin a compatible Felucca source revision, BSP revision and AC79 SDK revision.
-- [ ] Build a harmless VoiceTest app with the matching FM1 toolchain; do not flash yet.
-- [ ] Confirm audio input and output hardware paths.
-- [ ] Confirm available RAM, CPU budget and supported sample rates.
+- [x] Inspect Felucca audio output and USB audio direction.
+- [x] Inspect felucca-bsp and fm1-base Wi-Fi/network interfaces.
+- [x] Document Wi-Fi, memory, radio and source/licence constraints.
+- [ ] Pin exact fm1-base, felucca-bsp and AC79 SDK revisions.
+- [ ] Confirm VoiceTest's source licence/provenance for the Wi-Fi build.
+- [ ] Create a clean VoiceTest app from the fm1-base template.
+- [ ] Build a harmless FM1 app with the matching toolchain; do not flash yet.
 
 ## Phase 2 — reliable audio input/output
 
-- [ ] Implement one verified input adapter.
-- [ ] Implement bounded buffering and dropout reporting.
-- [ ] Implement output adapter and bypass monitoring.
-- [ ] Measure end-to-end latency and sustained stability.
-- [ ] Prove Wi-Fi availability and a stable UDP receive path if Wi-Fi remains the selected transport.
+- [ ] Add the phone UDP receiver as a network-task source.
+- [ ] Add a bounded PCM ring between network task and audio callback.
+- [ ] Implement dropout reporting, jitter handling and safe fade on timeout.
+- [ ] Implement output bypass/monitoring.
+- [ ] Measure end-to-end latency and sustained stability on hardware.
 
 ## Phase 3 — shared analysis
 
@@ -34,6 +35,7 @@
 - [ ] Add voiced/unvoiced classification.
 - [ ] Add spectral envelope and formant tracking.
 - [ ] Add transient and speech-feature estimates.
+- [ ] Profile analysis CPU and RAM with Wi-Fi enabled.
 
 ## Phase 4 — processing blocks
 
@@ -53,7 +55,7 @@
 - [ ] Implement update and post-write identity verification.
 - [ ] Test return to original Felucca and separately to official M-VAVE V15.
 - [ ] Add update discovery and a user-confirmed update flow.
-- [ ] Add BLE-MIDI parameter control only if the selected transport allows it.
+- [ ] Add MIDI parameter control only if the selected radio transport allows it.
 - [ ] Add parameter smoothing and preset/state handling.
 - [ ] Add a modular routing layer after individual blocks are stable.
 - [ ] Profile and optimise on the FM1.
