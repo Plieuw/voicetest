@@ -17,7 +17,9 @@ These measurements are useful for level tracking and basic diagnostics. They are
 
 ### Stage 1 — fundamental frequency and voicing
 
-Planned:
+Initial implementation: a YIN-style difference-function estimator is now present in the portable core. It returns an F0 estimate, a confidence value, and a voiced flag. It uses single-precision arithmetic and fixed stack storage. It is an initial prototype, not yet tuned or benchmarked on the FM1.
+
+Still planned:
 - fundamental-frequency estimate (F0)
 - confidence / periodicity
 - voiced, unvoiced or uncertain classification
