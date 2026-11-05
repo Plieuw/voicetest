@@ -1,5 +1,20 @@
 # FM1 target notes
 
+## Starting point: original Felucca
+
+The integration baseline is the original upstream Felucca firmware and source, not the user's `fm1pokoe` fork.
+
+The current upstream Felucca project documents:
+- a firmware app, a dedicated update loader and a `.fwsc` install package
+- a USB-MIDI SysEx installer with device identity detection and post-install identity verification
+- a route back to the official M-VAVE V15 package
+- a build based on the JieLi pi32v2 toolchain and AC79 SDK
+- separate `Felucca-Engines` and `felucca-bsp` submodules
+
+See [FELUCCA_INTEGRATION.md](FELUCCA_INTEGRATION.md) and the upstream [BUILDING.md](https://github.com/hugelton/Felucca/blob/main/BUILDING.md).
+
+Do not assume that Felucca's installer accepts an arbitrary VoiceTest package. Its current installer validates package identity and the Felucca loader marker; the official V15 package is a special, hash-verified exception. A VoiceTest package format and update path must be designed and tested separately.
+
 ## Known hardware constraints
 
 The FM1 is based on the JieLi AC791N / WL82 family and uses a pi32v2 CPU. Community hardware documentation reports:
@@ -20,27 +35,23 @@ The current `fm1-base` documentation describes Wi-Fi as a station using JieLi's 
 
 The published board overview documents stereo output, but does not establish a built-in microphone or line-level audio input. The FM1 should therefore not be assumed to accept an analogue microphone directly.
 
-The fm1-base USB audio options also need to be interpreted carefully:
-- USB audio recording exposes the FM1's output to a computer.
-- USB audio playback lets a computer play through the FM1's output mixer.
-- The platform documentation says the computer's playback is mixed after the app's own MASTER output. That does not establish that an app can read the computer's incoming PCM as an input signal.
-
-A real-time voice processor needs a PCM input that the app can actually access. The current fm1-base app interface documents USB audio capture as a platform feature, but its Wi-Fi example disables it for memory reasons. We must inspect the exact audio callback/API and verify whether app code can consume those captured samples before treating USB audio as a usable input.
+Felucca's current build guide describes USB Audio Class input as the master output (stereo, 44.1 or 48 kHz) exposed over USB. That is useful for sending FM1 audio to a computer, but it does not by itself prove that the FM1 application can consume incoming PCM from a phone or computer. We must inspect the BSP's actual capture/playback direction and callback before treating USB audio as a usable input.
 
 ## Candidate input routes
 
-1. **Wi-Fi UDP from a companion device.** Technically plausible if the firmware can receive PCM and the RAM/flash budget permits it. On fm1-base, Wi-Fi and Bluetooth are mutually exclusive. The Wi-Fi stack consumes a substantial part of the available memory, so this needs a measured prototype.
-2. **USB Audio Class host input.** Potentially possible only if the FM1 is powered and configured as a USB host and the firmware implements host-side audio capture. This is not provided by the ordinary USB audio device features described above.
+1. **Wi-Fi UDP from a companion device.** Technically plausible if the firmware can receive PCM and the RAM/flash budget permits it. Memory cost and radio coexistence need measurement on the exact Felucca/BSP baseline.
+2. **USB Audio Class host input.** Requires verified host-side audio capture and a suitable power/host arrangement; ordinary USB device audio descriptors do not establish this.
 3. **External audio interface / custom hardware.** Not part of the no-modification plan; do not assume a direct analogue input exists.
-4. **Bluetooth audio input.** Not currently established by the reviewed fm1-base documentation. Its documented A2DP feature is output to headphones/speakers.
+4. **Bluetooth audio input.** Not currently established by the reviewed Felucca build documentation. Do not confuse Bluetooth MIDI with audio streaming.
 
 ## First hardware milestone
 
 Before flashing a custom image:
 - record the firmware version shown at power-on
-- make a full backup of the current firmware and user data with a compatible tool
-- confirm the exact target platform and matching SDK/toolchain
+- back up projects/presets and confirm what the backup actually contains
+- confirm the exact target board/flash revision
+- pin the matching Felucca source, BSP and SDK revisions
 - build and test a harmless audio-output prototype first
 - only then test a candidate voice-input route
 
-Do not flash an experimental image until a recovery path and a known-good stock image are available.
+Do not flash an experimental image until a recovery path and a known-good original Felucca package are available and verified.
