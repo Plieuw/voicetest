@@ -20,6 +20,12 @@ int main(void)
     const float samples[] = { -1.0f, 0.0f, 1.0f, 0.0f };
     const vt_audio_frame_t frame = { samples, 4, 48000 };
     vt_basic_features_t features;
+    float tone[4096];
+    float silence[4096] = { 0.0f };
+    vt_audio_frame_t tone_frame = { tone, 4096, 48000 };
+    vt_audio_frame_t silence_frame = { silence, 4096, 48000 };
+    vt_pitch_result_t pitch;
+    size_t i;
 
     CHECK(vt_analyse_basic(&frame, &features) == 1);
     CHECK(features.has_samples == 1);
@@ -29,11 +35,24 @@ int main(void)
 
     CHECK(vt_analyse_basic(NULL, &features) == 0);
     CHECK(features.has_samples == 0);
-
     {
         const vt_audio_frame_t invalid = { NULL, 4, 48000 };
         CHECK(vt_analyse_basic(&invalid, &features) == 0);
     }
+
+    for (i = 0; i < 4096; ++i) {
+        tone[i] = 0.8f * sinf(2.0f * 3.14159265358979323846f *
+                              220.0f * (float)i / 48000.0f);
+    }
+
+    CHECK(vt_estimate_pitch_yin(&tone_frame, 70.0f, 1000.0f, &pitch) == 1);
+    CHECK(pitch.is_voiced == 1);
+    CHECK(nearly_equal(pitch.frequency_hz, 220.0f, 1.5f));
+    CHECK(pitch.confidence > 0.8f);
+
+    CHECK(vt_estimate_pitch_yin(&silence_frame, 70.0f, 1000.0f, &pitch) == 1);
+    CHECK(pitch.is_voiced == 0);
+    CHECK(vt_estimate_pitch_yin(&tone_frame, 0.0f, 1000.0f, &pitch) == 0);
 
     puts("All voice engine tests passed.");
     return 0;
