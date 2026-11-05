@@ -2,7 +2,6 @@
 
 #include <math.h>
 
-#define VT_YIN_MAX_TAU 2048U
 #define VT_YIN_THRESHOLD 0.15f
 #define VT_YIN_MAX_ACCEPTABLE_CMND 0.35f
 
@@ -59,9 +58,10 @@ int vt_analyse_basic(const vt_audio_frame_t *frame,
 int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
                           float min_frequency_hz,
                           float max_frequency_hz,
+                          vt_pitch_workspace_t *workspace,
                           vt_pitch_result_t *result)
 {
-    float difference[VT_YIN_MAX_TAU + 1U];
+    float *difference;
     float cumulative = 0.0f;
     float best_cmnd = 1.0f;
     unsigned int min_tau;
@@ -78,7 +78,7 @@ int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
     result->confidence = 0.0f;
     result->is_voiced = 0;
 
-    if (frame == NULL || frame->samples == NULL ||
+    if (frame == NULL || frame->samples == NULL || workspace == NULL ||
         frame->sample_rate_hz == 0U || frame->sample_count < 8U ||
         !isfinite(min_frequency_hz) || !isfinite(max_frequency_hz) ||
         min_frequency_hz <= 0.0f ||
@@ -97,6 +97,7 @@ int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
         return 0;
     }
 
+    difference = workspace->difference;
     usable_samples = frame->sample_count - (size_t)max_tau;
     for (tau = 0U; tau <= max_tau; ++tau) {
         difference[tau] = 0.0f;
