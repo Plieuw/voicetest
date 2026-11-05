@@ -17,7 +17,11 @@ These measurements are useful for level tracking and basic diagnostics. They are
 
 ### Stage 1 — fundamental frequency and voicing
 
-Initial implementation: a YIN-style difference-function estimator is now present in the portable core. It returns an F0 estimate, a confidence value, and a voiced flag. It uses single-precision arithmetic and fixed stack storage. It is an initial prototype, not yet tuned or benchmarked on the FM1.
+Initial implementation: a YIN-style difference-function estimator is present in the portable core. It returns an F0 estimate, a confidence value, and a voiced flag. It uses single-precision arithmetic and caller-owned scratch storage.
+
+The YIN workspace is about 4 KiB (1025 floats). On the FM1, allocate one workspace in static storage; do not put it on the audio callback's stack. A workspace cannot be shared by concurrent calls. The current maximum lag is 1024 samples, so the minimum supported frequency is sample_rate / 1024 (about 46.9 Hz at 48 kHz). This is a deliberate memory limit for the first target prototype, not a claim that the estimator is already suitable for every voice register.
+
+This is an initial prototype, not yet tuned or benchmarked on the FM1. The direct difference-function implementation may also be too CPU-intensive at long analysis windows; it must be profiled before being scheduled in the real-time callback.
 
 Still planned:
 - fundamental-frequency estimate (F0)
@@ -60,7 +64,7 @@ A SAM-like synthesis mode could use these features to control a speech synthesis
 
 ## API direction
 
-The public API should keep audio frames and analysis features separate. An effect receives the feature frame as read-only input and must not silently modify the analyser's state.
+The public API keeps audio frames and analysis features separate. An effect receives the feature frame as read-only input and must not silently modify the analyser's state.
 
 The current header defines a small feature structure and a stateless frame-analysis function. Future analysis algorithms can extend the structure while keeping confidence and validity explicit.
 
