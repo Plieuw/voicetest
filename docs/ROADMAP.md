@@ -6,7 +6,8 @@
 - [x] Establish a portable PCM frame contract.
 - [x] Add basic signal measurements and host-side tests.
 - [x] Add a portable VTP1 phone-packet parser and PCM16 conversion tests.
-- [ ] Build and run the complete host test suite in CI.
+- [x] Add a bounded four-block SPSC audio queue and host-side tests.
+- [x] Build and run the complete portable host test suite in GitHub Actions.
 - [ ] Confirm exact FM1 board revision and SoC marking.
 
 ## Phase 1 — original Felucca and platform
@@ -15,17 +16,20 @@
 - [x] Inspect Felucca audio output and USB audio direction.
 - [x] Inspect felucca-bsp and fm1-base Wi-Fi/network interfaces.
 - [x] Document Wi-Fi, memory, radio and source/licence constraints.
-- [ ] Pin exact fm1-base, felucca-bsp and AC79 SDK revisions.
-- [ ] Confirm VoiceTest's source licence/provenance for the Wi-Fi build.
-- [ ] Create a clean VoiceTest app from the fm1-base template.
+- [ ] Pin exact original Felucca, felucca-bsp and AC79 SDK revisions.
+- [ ] Confirm VoiceTest's source licence/provenance for any Wi-Fi code port.
+- [ ] Create a VoiceTest firmware variant based on original Felucca, preserving its build and recovery conventions.
 - [ ] Build a harmless FM1 app with the matching toolchain; do not flash yet.
 
 ## Phase 2 — reliable audio input/output
 
+- [x] Define the VTP1 phone packet format and parser.
+- [x] Implement the bounded SPSC PCM queue between a future network task and audio callback.
 - [ ] Add the phone UDP receiver as a network-task source.
-- [ ] Add a bounded PCM ring between network task and audio callback.
-- [ ] Implement dropout reporting, jitter handling and safe fade on timeout.
-- [ ] Implement output bypass/monitoring.
+- [ ] Port or implement the required network transport for the original Felucca baseline.
+- [ ] Verify queue atomics are lock-free on the JieLi toolchain.
+- [ ] Implement packet-gap reporting, jitter handling and safe fade on timeout.
+- [ ] Connect queued PCM to the audio render path and add output bypass/monitoring.
 - [ ] Measure end-to-end latency and sustained stability on hardware.
 
 ## Phase 3 — shared analysis
@@ -35,7 +39,7 @@
 - [ ] Add voiced/unvoiced classification.
 - [ ] Add spectral envelope and formant tracking.
 - [ ] Add transient and speech-feature estimates.
-- [ ] Profile analysis CPU and RAM with Wi-Fi enabled.
+- [ ] Profile analysis CPU and RAM with the selected input transport enabled.
 
 ## Phase 4 — processing blocks
 
