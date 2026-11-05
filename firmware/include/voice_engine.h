@@ -20,13 +20,25 @@ typedef struct {
     int has_samples;
 } vt_basic_features_t;
 
-/*
- * Calculates basic time-domain measurements for one mono float PCM frame.
- * The function performs no allocation and does not retain the input pointer.
- * Returns 1 on success, 0 for invalid input.
- */
+typedef struct {
+    float frequency_hz;
+    float confidence;
+    int is_voiced;
+} vt_pitch_result_t;
+
 int vt_analyse_basic(const vt_audio_frame_t *frame,
                      vt_basic_features_t *features);
+
+/*
+ * Estimate fundamental frequency with the YIN difference method.
+ * min/max_frequency_hz bound the search. A valid call returns 1;
+ * result->is_voiced indicates whether a reliable periodic candidate exists.
+ * Uses fixed stack storage and performs no heap allocation.
+ */
+int vt_estimate_pitch_yin(const vt_audio_frame_t *frame,
+                          float min_frequency_hz,
+                          float max_frequency_hz,
+                          vt_pitch_result_t *result);
 
 #ifdef __cplusplus
 }
