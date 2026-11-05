@@ -8,6 +8,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 add_library(voicetest_dsp
     firmware/src/voice_engine.c
     firmware/src/phone_audio_packet.c
+    firmware/src/audio_block_queue.c
 )
 target_include_directories(voicetest_dsp PUBLIC firmware/include)
 
@@ -29,3 +30,7 @@ add_test(NAME voice_engine COMMAND test_voice_engine)
 add_executable(test_phone_audio_packet tests/test_phone_audio_packet.c)
 target_link_libraries(test_phone_audio_packet PRIVATE voicetest_dsp)
 add_test(NAME phone_audio_packet COMMAND test_phone_audio_packet)
+
+add_executable(test_audio_block_queue tests/test_audio_block_queue.c)
+target_link_libraries(test_audio_block_queue PRIVATE voicetest_dsp)
+add_test(NAME audio_block_queue COMMAND test_audio_block_queue)
